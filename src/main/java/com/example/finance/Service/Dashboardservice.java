@@ -16,17 +16,19 @@ public class Dashboardservice {
     @Autowired
     private FinancialRecordRepository repo;
 
-    public Map<String,Double> getSummary(){
+    public Map<String, Double> getSummary() {
         List<FinancialRecord> records = repo.findAll();
 
-        double income=records.stream().filter(r->r.getType()==Type.INCOME).mapToDouble(FinancialRecord::getAmount).sum();
+        double income = records.stream().filter(r -> r.getType() == Type.INCOME).mapToDouble(FinancialRecord::getAmount)
+                .sum();
 
-        double expense=records.stream().filter(r->r.getType()==Type.EXPENSE).mapToDouble(FinancialRecord::getAmount).sum();
-           
-        Map<String,Double> summary=new HashMap<>();
+        double expense = records.stream().filter(r -> r.getType() == Type.EXPENSE)
+                .mapToDouble(FinancialRecord::getAmount).sum();
+
+        Map<String, Double> summary = new HashMap<>();
         summary.put("income", income);
         summary.put("expense", expense);
-        summary.put("net", income-expense);
+        summary.put("net", income - expense);
         return summary;
     }
 }

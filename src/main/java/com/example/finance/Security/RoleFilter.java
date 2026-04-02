@@ -16,16 +16,18 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class RoleFilter extends OncePerRequestFilter {
-        @Override
-        protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response, FilterChain filterChain)throws ServletException,IOException
-        {
-            String role=request.getHeader("X-ROLE");
-            if(role!=null) {
-                SimpleGrantedAuthority authority=new SimpleGrantedAuthority("ROLE_"+role.toUpperCase());
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+                String username = request.getHeader("X-USER");
+        String role = request.getHeader("X-ROLE");
+        if (username!=null && role != null) {
+            SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role.toUpperCase());
 
-                UsernamePasswordAuthenticationToken auth=new UsernamePasswordAuthenticationToken("mockuser",null,List.of(authority));
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            }
-            filterChain.doFilter(request, response);
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
+                    List.of(authority));
+            SecurityContextHolder.getContext().setAuthentication(auth);
         }
+        filterChain.doFilter(request, response);
+    }
 }

@@ -7,13 +7,14 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+// import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
 @Entity
 @Data
 public class FinancialRecord {
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue
     private Long id;
 
     private Double amount;
@@ -26,8 +27,8 @@ public class FinancialRecord {
     private LocalDate date;
 
     private String notes;
-    
-    @ManyToOne
-    private Users createdBy;
-    
+
+    // @ManyToOne
+    // private Users createdBy;
+
 }

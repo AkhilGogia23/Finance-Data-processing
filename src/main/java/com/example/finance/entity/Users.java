@@ -10,7 +10,8 @@ import lombok.Data;
 @Entity
 @Data
 public class Users {
-    @Id @GeneratedValue 
+    @Id
+    @GeneratedValue
     private Long id;
 
     private String name;
@@ -18,6 +19,7 @@ public class Users {
 
     @Enumerated(EnumType.STRING)
     private Role role;
-
-    private boolean active;
+    
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 }

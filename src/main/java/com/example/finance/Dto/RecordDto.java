@@ -1,7 +1,5 @@
 package com.example.finance.Dto;
 
-
-
 import com.example.finance.entity.Type;
 
 import jakarta.validation.constraints.NotNull;
@@ -10,7 +8,7 @@ import lombok.Data;
 
 @Data
 public class RecordDto {
-    
+
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be positive")
     private Double amount;
