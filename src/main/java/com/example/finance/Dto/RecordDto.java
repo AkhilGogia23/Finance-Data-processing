@@ -2,6 +2,7 @@ package com.example.finance.Dto;
 
 import com.example.finance.entity.Type;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -14,6 +15,9 @@ public class RecordDto {
     private Double amount;
     @NotNull(message = "Type is required")
     private Type type;
+
+    @NotBlank(message = "User email is required")
+    private String userEmail;
 
     private String category;
     private String notes;

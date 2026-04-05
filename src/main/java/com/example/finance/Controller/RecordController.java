@@ -3,17 +3,18 @@ package com.example.finance.Controller;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,23 +27,35 @@ import com.example.finance.entity.Type;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("records")
+@RequestMapping("/records")
 public class RecordController {
-    @Autowired
-    private RecordService service;
+    private final RecordService service;
 
-    @PostMapping
-    public ResponseEntity<?> create(
-            @RequestHeader("X-USER") String username,
-            @Valid @RequestBody RecordDto dto) {
-
-        return ResponseEntity.ok(service.create(dto, username));
+    public RecordController(RecordService service) {
+        this.service = service;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','ANALYST','VIEWER')")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
+    public ResponseEntity<?> create(
+            Authentication authentication,
+            @Valid @RequestBody RecordDto dto) {
+
+        boolean canCreateForOtherUsers = authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch("ROLE_ADMIN"::equals);
+
+        return ResponseEntity.ok(service.create(dto, authentication.getName(), canCreateForOtherUsers));
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
     @GetMapping
-    public List<FinancialRecord> getAll(@RequestHeader("X-USER") String username) {
-        return service.getAll(username);
+    public List<FinancialRecord> getAll(@RequestParam(required = false) String userEmail) {
+        if (userEmail != null && !userEmail.isBlank()) {
+            return service.getAllByUserEmail(userEmail);
+        }
+
+        return service.getAllRecords();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -54,8 +67,10 @@ public class RecordController {
 
     // @PutMapping()
 
+    @PreAuthorize("hasAnyRole('ADMIN','ANALYST')")
     @GetMapping("/filter")
     public ResponseEntity<?> filter(
+            Authentication authentication,
             @RequestParam(required =false) Type type,
             @RequestParam(required =false) String category,
 
@@ -65,14 +80,23 @@ public class RecordController {
             
         ) {
         return ResponseEntity.ok(
-                service.filter(type, category, startDate, endDate));
+            service.filter(type, category, startDate, endDate, authentication.getName()));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/{id}")
     public ResponseEntity<?> update(
+            Authentication authentication,
             @PathVariable Long id,
             @Valid @RequestBody RecordDto dto) {
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+
+        if (!isAdmin) {
+            throw new AccessDeniedException("Only ADMIN can update records");
+        }
 
         return ResponseEntity.ok(service.update(id, dto));
     }

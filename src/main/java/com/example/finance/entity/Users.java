@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Entity
@@ -21,9 +22,15 @@ public class Users {
     @Column(unique = true)
     private String email;
 
+    @NotNull(message = "Role is required")
     @Enumerated(EnumType.STRING)
     private Role role;
-    
+
+    @NotNull(message = "Status is required")
     @Enumerated(EnumType.STRING)
-    private UserStatus status;
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.ACTIVE;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
 }

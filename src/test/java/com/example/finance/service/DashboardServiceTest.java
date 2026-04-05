@@ -3,40 +3,34 @@ package com.example.finance.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import com.example.finance.Service.Dashboardservice;
-import com.example.finance.entity.*;
-import com.example.finance.repository.*;
+import com.example.finance.entity.FinancialRecord;
+import com.example.finance.entity.Type;
+import com.example.finance.repository.FinancialRecordRepository;
 
 class DashboardServiceTest {
 
     @Mock
     private FinancialRecordRepository repo;
 
-    @Mock
-    private UserRepository userRepo;
-
-    @InjectMocks
     private Dashboardservice service;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
+        service = new Dashboardservice(repo);
     }
 
     @Test
     void testSummaryCalculation() {
-
-        Users user = new Users();
-        user.setEmail("akhil@gmail.com");
-
-        when(userRepo.findByEmailIgnoreCase("akhil@gmail.com"))
-                .thenReturn(Optional.of(user));
 
         FinancialRecord r1 = new FinancialRecord();
         r1.setType(Type.INCOME);
@@ -46,13 +40,13 @@ class DashboardServiceTest {
         r2.setType(Type.EXPENSE);
         r2.setAmount(300.0);
 
-        when(repo.findByUserAndDeletedFalse(user))
-                .thenReturn(List.of(r1, r2));
+        when(repo.findByDeletedFalse())
+            .thenReturn(List.of(r1, r2));
 
-        Map<String, Double> result = service.getSummary("akhil@gmail.com", null);
+        Map<String, Double> result = service.getSummary(null);
 
-        assertEquals(1000.0, result.get("income"));
-        assertEquals(300.0, result.get("expense"));
-        assertEquals(700.0, result.get("net"));
+        assertEquals(1000.0, result.get("totalIncome"));
+        assertEquals(300.0, result.get("totalExpense"));
+        assertEquals(700.0, result.get("netBalance"));
     }
 }

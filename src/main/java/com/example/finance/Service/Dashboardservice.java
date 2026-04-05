@@ -3,64 +3,66 @@ package com.example.finance.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.finance.entity.FinancialRecord;
 import com.example.finance.entity.Type;
-import com.example.finance.entity.Users;
-import com.example.finance.exception.ResourceNotFoundException;
+import com.example.finance.exception.BadRequestException;
 import com.example.finance.repository.FinancialRecordRepository;
-import com.example.finance.repository.UserRepository;
 
 @Service
 public class Dashboardservice {
-    @Autowired
-    private FinancialRecordRepository repo;
-    @Autowired
-    private UserRepository userRepo;
-   public Map<String, Double> getSummary(String username, String type) {
+    private final FinancialRecordRepository repo;
 
-    Users user = userRepo.findByEmailIgnoreCase(username.trim())
-        .orElseThrow(() ->
-            new ResourceNotFoundException("User not found with email: " + username));
+    public Dashboardservice(FinancialRecordRepository repo) {
+        this.repo = repo;
+    }
 
-    List<FinancialRecord> records = repo.findByUserAndDeletedFalse(user);
+   public Map<String, Double> getSummary(String type) {
 
-    double income = records.stream()
+    List<FinancialRecord> records = repo.findByDeletedFalse();
+
+    double totalIncome = records.stream()
             .filter(r -> r.getType() == Type.INCOME)
             .mapToDouble(FinancialRecord::getAmount)
             .sum();
 
-    double expense = records.stream()
+    double totalExpense = records.stream()
             .filter(r -> r.getType() == Type.EXPENSE)
             .mapToDouble(FinancialRecord::getAmount)
             .sum();
 
-    double net = income - expense;
+    double netBalance = totalIncome - totalExpense;
 
     Map<String, Double> summary = new HashMap<>();
 
-    if (type == null) {
-        summary.put("income", income);
-        summary.put("expense", expense);
-        summary.put("net", net);
+    if (type == null || type.isBlank()) {
+        summary.put("totalIncome", totalIncome);
+        summary.put("totalExpense", totalExpense);
+        summary.put("netBalance", netBalance);
         return summary;
     }
 
     String[] types = type.split(",");
+    Set<String> allowed = Set.of("totalincome", "totalexpense", "netbalance");
 
     for (String t : types) {
-        switch (t.trim().toLowerCase()) {
-            case "income":
-                summary.put("income", income);
+        String normalized = t.trim().toLowerCase();
+        if (!allowed.contains(normalized)) {
+            throw new BadRequestException("Invalid type: " + t + ". Valid values: totalIncome, totalExpense, netBalance");
+        }
+
+        switch (normalized) {
+            case "totalincome":
+                summary.put("totalIncome", totalIncome);
                 break;
-            case "expense":
-                summary.put("expense", expense);
+            case "totalexpense":
+                summary.put("totalExpense", totalExpense);
                 break;
-            case "net":
-                summary.put("net", net);
+            case "netbalance":
+                summary.put("netBalance", netBalance);
                 break;
         }
     }
